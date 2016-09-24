@@ -2,25 +2,52 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/mikkeloscar/sshconfig"
 )
 
+func toSSHCmdString(h *sshconfig.SSHHost) string {
+	host := h.HostName
+	if host == "" {
+		host = h.Host[0]
+	}
+
+	return fmt.Sprintf("ssh -p %d %s@%s", h.Port, h.User, host)
+}
+
+func toString(h *sshconfig.SSHHost) string {
+	return strings.Join([]string{
+		h.Host[0],
+		h.HostName,
+		h.User,
+		strconv.Itoa(h.Port),
+		h.IdentityFile,
+		h.ProxyCommand,
+		toSSHCmdString(h),
+	}, "\t")
+}
+
 func main() {
 	hosts, err := sshconfig.ParseSSHConfig(os.Args[1])
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 
-	fmt.Println("Host\tHost Name\tUser\tPort\tIdentity File\tSSH Command")
-	for _, h := range hosts {
-		host := h.HostName
-		if host == "" {
-			host = h.Host[0]
-		}
+	fmt.Println(strings.Join([]string{
+		"Host",
+		"Host Name",
+		"User",
+		"Port",
+		"Identity File",
+		"Proxy Command",
+		"SSH Command",
+	}, "\t"))
 
-		sshCmd := fmt.Sprintf("ssh -p %d %s@%s", h.Port, h.User, host)
-		fmt.Printf("%s\t%s\t%s\t%d\t%s\t%s\n", h.Host[0], h.HostName, h.User, h.Port, h.IdentityFile, sshCmd)
+	for _, h := range hosts {
+		fmt.Println(toString(h))
 	}
 }
