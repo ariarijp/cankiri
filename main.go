@@ -19,8 +19,8 @@ func toSSHCmdString(h *sshconfig.SSHHost) string {
 	return fmt.Sprintf("ssh -p %d %s@%s", h.Port, h.User, host)
 }
 
-func toString(h *sshconfig.SSHHost) string {
-	return strings.Join([]string{
+func toArray(h *sshconfig.SSHHost) []string {
+	return []string{
 		h.Host[0],
 		h.HostName,
 		h.User,
@@ -28,7 +28,11 @@ func toString(h *sshconfig.SSHHost) string {
 		h.IdentityFile,
 		h.ProxyCommand,
 		toSSHCmdString(h),
-	}, "\t")
+	}
+}
+
+func toString(h *sshconfig.SSHHost) string {
+	return strings.Join(toArray(h), "\t")
 }
 
 func main() {
