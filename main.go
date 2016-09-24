@@ -33,14 +33,16 @@ func toArray(h *sshconfig.SSHHost) []string {
 }
 
 func toMap(h *sshconfig.SSHHost) map[string]interface{} {
+	arr := toArray(h)
+
 	return map[string]interface{}{
-		"Host":         h.Host[0],
-		"HostName":     h.HostName,
-		"User":         h.User,
-		"Port":         h.Port,
-		"IdentityFile": h.IdentityFile,
-		"ProxyCommand": h.ProxyCommand,
-		"SSHCmd":       toSSHCmdString(h),
+		"Host":         arr[0],
+		"HostName":     arr[1],
+		"User":         arr[2],
+		"Port":         arr[3],
+		"IdentityFile": arr[4],
+		"ProxyCommand": arr[5],
+		"SSHCmd":       arr[6],
 	}
 }
 
@@ -48,7 +50,7 @@ func toString(h *sshconfig.SSHHost, sep string) string {
 	return strings.Join(toArray(h), sep)
 }
 
-func toJson(h *sshconfig.SSHHost) string {
+func toJSON(h *sshconfig.SSHHost) string {
 	b, err := json.Marshal(toMap(h))
 	if err != nil {
 		log.Fatal(err)
@@ -71,7 +73,7 @@ func main() {
 		fmt.Println("[")
 
 		for i, h := range hosts {
-			fmt.Print("  ", toJson(h))
+			fmt.Print("  ", toJSON(h))
 
 			if i == len(hosts)-1 {
 				fmt.Println("")
@@ -83,7 +85,7 @@ func main() {
 		fmt.Println("]")
 	} else if *optFormat == "jsonl" {
 		for _, h := range hosts {
-			fmt.Println(toJson(h))
+			fmt.Println(toJSON(h))
 		}
 	} else {
 		fmt.Println(strings.Join([]string{
