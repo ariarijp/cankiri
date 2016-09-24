@@ -1,9 +1,10 @@
 package main
 
 import (
+	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
-	"os"
 	"strconv"
 	"strings"
 
@@ -31,27 +32,72 @@ func toArray(h *sshconfig.SSHHost) []string {
 	}
 }
 
-func toString(h *sshconfig.SSHHost) string {
-	return strings.Join(toArray(h), "\t")
+func toMap(h *sshconfig.SSHHost) map[string]interface{} {
+	return map[string]interface{}{
+		"Host":         h.Host[0],
+		"HostName":     h.HostName,
+		"User":         h.User,
+		"Port":         h.Port,
+		"IdentityFile": h.IdentityFile,
+		"ProxyCommand": h.ProxyCommand,
+		"SSHCmd":       toSSHCmdString(h),
+	}
 }
 
-func main() {
-	hosts, err := sshconfig.ParseSSHConfig(os.Args[1])
+func toString(h *sshconfig.SSHHost, sep string) string {
+	return strings.Join(toArray(h), sep)
+}
+
+func toJson(h *sshconfig.SSHHost) string {
+	b, err := json.Marshal(toMap(h))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(strings.Join([]string{
-		"Host",
-		"Host Name",
-		"User",
-		"Port",
-		"Identity File",
-		"Proxy Command",
-		"SSH Command",
-	}, "\t"))
+	return string(b)
+}
 
-	for _, h := range hosts {
-		fmt.Println(toString(h))
+func main() {
+	optFormat := flag.String("format", "tsv", "Format")
+	optSep := flag.String("sep", "\t", "Separator")
+	flag.Parse()
+
+	hosts, err := sshconfig.ParseSSHConfig(flag.Args()[0])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if *optFormat == "json" {
+		fmt.Println("[")
+
+		for i, h := range hosts {
+			fmt.Print("  ", toJson(h))
+
+			if i == len(hosts)-1 {
+				fmt.Println("")
+			} else {
+				fmt.Println(",")
+			}
+		}
+
+		fmt.Println("]")
+	} else if *optFormat == "jsonl" {
+		for _, h := range hosts {
+			fmt.Println(toJson(h))
+		}
+	} else {
+		fmt.Println(strings.Join([]string{
+			"Host",
+			"Host Name",
+			"User",
+			"Port",
+			"Identity File",
+			"Proxy Command",
+			"SSH Command",
+		}, *optSep))
+
+		for _, h := range hosts {
+			fmt.Println(toString(h, *optSep))
+		}
 	}
 }
