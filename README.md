@@ -1,7 +1,7 @@
 cankiri
 =====================
 
-Show SSH Config as Tab Separated Values.
+Show SSH Config as Tab Separated Values or others.
 
 ## Usage
 
