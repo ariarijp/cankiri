@@ -32,17 +32,30 @@ func toArray(h *sshconfig.SSHHost) []string {
 	}
 }
 
+func getFieldNames() []string {
+	return []string{
+		"Host",
+		"HostName",
+		"User",
+		"Port",
+		"IdentityFile",
+		"ProxyCommand",
+		"SSHCmd",
+	}
+}
+
 func toMap(h *sshconfig.SSHHost) map[string]interface{} {
-	arr := toArray(h)
+	keys := getFieldNames()
+	values := toArray(h)
 
 	return map[string]interface{}{
-		"Host":         arr[0],
-		"HostName":     arr[1],
-		"User":         arr[2],
-		"Port":         arr[3],
-		"IdentityFile": arr[4],
-		"ProxyCommand": arr[5],
-		"SSHCmd":       arr[6],
+		keys[0]: values[0],
+		keys[1]: values[1],
+		keys[2]: values[2],
+		keys[3]: values[3],
+		keys[4]: values[4],
+		keys[5]: values[5],
+		keys[6]: values[6],
 	}
 }
 
@@ -59,6 +72,36 @@ func toJSON(h *sshconfig.SSHHost) string {
 	return string(b)
 }
 
+func renderJSON(hosts []*sshconfig.SSHHost) {
+	fmt.Println("[")
+
+	for i, h := range hosts {
+		fmt.Print("  ", toJSON(h))
+
+		if i == len(hosts)-1 {
+			fmt.Println("")
+		} else {
+			fmt.Println(",")
+		}
+	}
+
+	fmt.Println("]")
+}
+
+func renderJSONL(hosts []*sshconfig.SSHHost) {
+	for _, h := range hosts {
+		fmt.Println(toJSON(h))
+	}
+}
+
+func renderDSV(hosts []*sshconfig.SSHHost, sep *string) {
+	fmt.Println(strings.Join(getFieldNames(), *sep))
+
+	for _, h := range hosts {
+		fmt.Println(toString(h, *sep))
+	}
+}
+
 func main() {
 	optFormat := flag.String("format", "tsv", "Format")
 	optSep := flag.String("sep", "\t", "Separator")
@@ -69,37 +112,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if *optFormat == "json" {
-		fmt.Println("[")
-
-		for i, h := range hosts {
-			fmt.Print("  ", toJSON(h))
-
-			if i == len(hosts)-1 {
-				fmt.Println("")
-			} else {
-				fmt.Println(",")
-			}
-		}
-
-		fmt.Println("]")
-	} else if *optFormat == "jsonl" {
-		for _, h := range hosts {
-			fmt.Println(toJSON(h))
-		}
-	} else {
-		fmt.Println(strings.Join([]string{
-			"Host",
-			"Host Name",
-			"User",
-			"Port",
-			"Identity File",
-			"Proxy Command",
-			"SSH Command",
-		}, *optSep))
-
-		for _, h := range hosts {
-			fmt.Println(toString(h, *optSep))
-		}
+	switch *optFormat {
+	case "json":
+		renderJSON(hosts)
+	case "jsonl":
+		renderJSONL(hosts)
+	default:
+		renderDSV(hosts, optSep)
 	}
 }
